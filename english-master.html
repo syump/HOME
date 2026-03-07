@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2879882711799073"
+     crossorigin="anonymous"></script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-60BW4QPWW9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-60BW4QPWW9');
+</script>
+
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>えいごマスター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* 3D回転などのカスタムスタイル */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        /* タッチ操作の無効化防止 */
+        body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+
+        // --- アイコンコンポーネント (SVG) ---
+        const Icon = ({ path, color = "currentColor", size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {path}
+            </svg>
+        );
+
+        const Icons = {
+            Volume2: (props) => <Icon {...props} path={<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></>} />,
+            VolumeX: (props) => <Icon {...props} path={<><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></>} />,
+            ArrowLeft: (props) => <Icon {...props} path={<><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></>} />,
+            Star: (props) => <Icon {...props} path={<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>} />,
+            BookOpen: (props) => <Icon {...props} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></>} />,
+            Type: (props) => <Icon {...props} path={<><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></>} />,
+            Sparkles: (props) => <Icon {...props} path={<><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></>} />,
+            Activity: (props) => <Icon {...props} path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>} />,
+            Smile: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></>} />
+        };
+
+        // --- データ定義 ---
+        const RAW_ALPHA = 'abcdefghijklmnopqrstuvwxyz'.split('').map(c => [c, c.toUpperCase(), '', 1]);
+        const RAW_NOUNS = [
+            ['ant', 'アリ', '🐜', 1], ['bag', 'かばん', '👜', 1], ['bat', 'コウモリ', '🦇', 1], ['bear', 'くま', '🐻', 1],
+            ['bed', 'ベッド', '🛏️', 1], ['bee', 'ハチ', '🐝', 1], ['box', 'はこ', '📦', 1], ['bus', 'バス', '🚌', 1],
+            ['can', 'かん', '🥫', 1], ['cap', 'ぼうし', '🧢', 1], ['car', 'くるま', '🚗', 1], ['cat', 'ねこ', '🐱', 1],
+            ['cow', 'ウシ', '🐮', 1], ['cup', 'コップ', '🥤', 1], ['dog', 'いぬ', '🐶', 1], ['ear', 'みみ', '👂', 1],
+            ['egg', 'たまご', '🥚', 1], ['eye', 'め', '👁️', 1], ['fan', 'せんぷうき', '💨', 1], ['fox', 'キツネ', '🦊', 1],
+            ['hat', 'ハット', '👒', 1], ['ice', 'こおり', '🧊', 1], ['ink', 'インク', '✒️', 1], ['jam', 'ジャム', '🍓', 1],
+            ['jet', 'ジェットき', '✈️', 1], ['key', 'かぎ', '🔑', 1], ['map', 'ちず', '🗺️', 1], ['net', 'あみ', '🕸️', 1],
+            ['nut', 'きのみ', '🌰', 1], ['owl', 'フクロウ', '🦉', 1], ['pan', 'フライパン', '🍳', 1], ['pen', 'ペン', '🖊️', 1],
+            ['pig', 'ブタ', '🐷', 1], ['pot', 'なべ', '🍲', 1], ['rat', 'ネズミ', '🐀', 1], ['sun', 'たいよう', '☀️', 1],
+            ['top', 'コマ', '😵', 1], ['toy', 'おもちゃ', '🧸', 1], ['van', 'バン', '🚐', 1],
+            ['ball', 'ボール', '⚽', 2], ['bell', 'すず', '🔔', 2], ['bird', 'とり', '🐦', 2], ['boat', 'ボート', '🛶', 2],
+            ['book', 'ほん', '📖', 2], ['cake', 'ケーキ', '🍰', 2], ['card', 'カード', '🃏', 2], ['corn', 'トウモロコシ', '🌽', 2],
+            ['desk', 'つくえ', '🏫', 2], ['door', 'ドア', '🚪', 2], ['duck', 'アヒル', '🦆', 2], ['fish', 'さかな', '🐟', 2],
+            ['flag', 'はた', '🚩', 2], ['frog', 'カエル', '🐸', 2], ['goat', 'ヤギ', '🐐', 2], ['gold', 'きん', '🪙', 2],
+            ['hand', 'て', '✋', 2], ['head', 'あたま', '🗣️', 2], ['home', 'いえ', '🏠', 2], ['kite', 'たこ', '🪁', 2],
+            ['lamp', 'ランプ', '💡', 2], ['leaf', 'はっぱ', '🍃', 2], ['lion', 'ライオン', '🦁', 2], ['milk', 'ぎゅうにゅう', '🥛', 2],
+            ['moon', 'つき', '🌙', 2], ['nest', 'す', '🪺', 2], ['nose', 'はな', '👃', 2], ['park', 'こうえん', '🛝', 2],
+            ['pear', 'なし', '🍐', 2], ['rain', 'あめ', '☔', 2], ['ring', 'ゆびわ', '💍', 2], ['road', 'みち', '🛣️', 2],
+            ['roof', 'やね', '🏠', 2], ['room', 'へや', '🚪', 2], ['rose', 'バラ', '🌹', 2], ['ship', 'ふね', '🚢', 2],
+            ['shoe', 'くつ', '👟', 2], ['snow', 'ゆき', '⛄', 2], ['soap', 'せっけん', '🧼', 2], ['sock', 'くつした', '🧦', 2],
+            ['star', 'ほし', '⭐', 2], ['tent', 'テント', '⛺', 2], ['tree', 'き', '🌳', 2], ['wind', 'かぜ', '🍃', 2],
+            ['wolf', 'オオカミ', '🐺', 2], ['worm', 'ミミズ', '🪱', 2],
+            ['apple', 'りんご', '🍎', 3], ['bread', 'パン', '🍞', 3], ['chair', 'イス', '🪑', 3], ['clock', 'とけい', '⏰', 3],
+            ['cloud', 'くも', '☁️', 3], ['dress', 'ドレス', '👗', 3], ['earth', 'ちきゅう', '🌍', 3], ['fruit', 'くだもの', '🍇', 3],
+            ['glass', 'コップ', '🥃', 3], ['glove', 'てぶくろ', '🧤', 3], ['grape', 'ぶどう', '🍇', 3], ['grass', 'くさ', '🌿', 3],
+            ['heart', 'ハート', '❤️', 3], ['horse', 'ウマ', '🐎', 3], ['house', 'いえ', '🏠', 3], ['juice', 'ジュース', '🍹', 3],
+            ['knife', 'ナイフ', '🔪', 3], ['lemon', 'レモン', '🍋', 3], ['light', 'ひかり', '💡', 3], ['melon', 'メロン', '🍈', 3],
+            ['money', 'おかね', '💰', 3], ['mouse', 'ネズミ', '🐭', 3], ['mouth', 'くち', '👄', 3], ['music', 'おんがく', '🎵', 3],
+            ['night', 'よる', '🌃', 3], ['nurse', 'かんごし', '👩‍⚕️', 3], ['ocean', 'うみ', '🌊', 3], ['onion', 'たまねぎ', '🧅', 3],
+            ['panda', 'パンダ', '🐼', 3], ['paper', 'かみ', '📄', 3], ['peach', 'もも', '🍑', 3], ['phone', 'でんわ', '📱', 3],
+            ['piano', 'ピアノ', '🎹', 3], ['pilot', 'パイロット', '👨‍✈️', 3], ['pizza', 'ピザ', '🍕', 3], ['plane', 'ひこうき', '✈️', 3],
+            ['plant', 'しょくぶつ', '🪴', 3], ['plate', 'おさら', '🍽️', 3], ['queen', 'じょおう', '👸', 3], ['radio', 'ラジオ', '📻', 3],
+            ['river', 'かわ', '🏞️', 3], ['robot', 'ロボット', '🤖', 3], ['ruler', 'じょうぎ', '📏', 3], ['salad', 'サラダ', '🥗', 3],
+            ['shark', 'サメ', '🦈', 3], ['sheep', 'ヒツジ', '🐑', 3], ['shirt', 'シャツ', '👕', 3], ['shoes', 'くつ', '👟', 3],
+            ['skirt', 'スカート', '👗', 3], ['snake', 'ヘビ', '🐍', 3], ['socks', 'くつした', '🧦', 3], ['spoon', 'スプーン', '🥄', 3],
+            ['stamp', 'きって', '📮', 3], ['stick', 'ぼう', '🥢', 3], ['stone', 'いし', '🪨', 3], ['store', 'おみせ', '🏪', 3],
+            ['storm', 'あらし', '⛈️', 3], ['sugar', 'さとう', '🍬', 3], ['table', 'テーブル', '🍽️', 3], ['tiger', 'トラ', '🐯', 3],
+            ['toast', 'トースト', '🍞', 3], ['tooth', 'は', '🦷', 3], ['towel', 'タオル', '🧖', 3], ['train', 'でんしゃ', '🚃', 3],
+            ['truck', 'トラック', '🚚', 3], ['watch', 'うでどけい', '⌚', 3], ['water', 'みず', '💧', 3], ['whale', 'クジラ', '🐋', 3],
+            ['woman', 'おんなのひと', '👩', 3], ['world', 'せかい', '🌎', 3], ['zebra', 'シマウマ', '🦓', 3],
+            ['animal', 'どうぶつ', '🐾', 3], ['banana', 'バナナ', '🍌', 3], ['bridge', 'はし', '🌉', 3], ['camera', 'カメラ', '📷', 3],
+            ['candle', 'ろうそく', '🕯️', 3], ['carrot', 'にんじん', '🥕', 3], ['castle', 'おしろ', '🏰', 3], ['circle', 'まる', '⭕', 3],
+            ['doctor', 'おいしゃさん', '👨‍⚕️', 3], ['dollar', 'ドル', '💵', 3], ['donkey', 'ロバ', '🫏', 3], ['dragon', 'ドラゴン', '🐉', 3],
+            ['eraser', 'けしごむ', '🧹', 3], ['family', 'かぞく', '👨‍👩‍👧‍👦', 3], ['finger', 'ゆび', '👆', 3], ['flower', 'はな', '🌼', 3],
+            ['forest', 'もり', '🌲', 3], ['friend', 'ともだち', '🤝', 3], ['garden', 'にわ', '🏡', 3], ['giraffe', 'キリン', '🦒', 3],
+            ['guitar', 'ギター', '🎸', 3], ['island', 'しま', '🏝️', 3], ['jacket', 'ジャケット', '🧥', 3], ['kitten', 'こねこ', '🐱', 3],
+            ['letter', 'てがみ', '✉️', 3], ['monkey', 'さる', '🐵', 3], ['mother', 'おかあさん', '👩', 3], ['number', 'すうじ', '🔢', 3],
+            ['orange', 'オレンジ', '🍊', 3], ['pencil', 'えんぴつ', '✏️', 3], ['people', 'ひとびと', '👥', 3], ['picnic', 'ピクニック', '🧺', 3],
+            ['pocket', 'ポケット', '👖', 3], ['potato', 'ジャガイモ', '🥔', 3], ['puppy', 'こいぬ', '🐕', 3], ['school', 'がっこう', '🏫', 3],
+            ['soccer', 'サッカー', '⚽', 3], ['spider', 'クモ', '🕷️', 3], ['street', 'とおり', '🛣️', 3], ['summer', 'なつ', '🌻', 3],
+            ['sunday', 'にちようび', '📅', 3], ['tomato', 'トマト', '🍅', 3], ['turtle', 'カメ', '🐢', 3], ['violin', 'バイオリン', '🎻', 3],
+            ['window', 'まど', '🪟', 3], ['winter', 'ふゆ', '⛄', 3], ['yellow', 'きいろ', '🟨', 3], ['balloon', 'ふうせん', '🎈', 3],
+            ['chicken', 'ニワトリ', '🐔', 3], ['kitchen', 'キッチン', '🍳', 3], ['rainbow', 'にじ', '🌈', 3], ['snowman', 'ゆきだるま', '☃️', 3],
+            ['teacher', 'せんせい', '👩‍🏫', 3], ['umbrella', 'かさ', '☂️', 3], ['birthday', 'たんじょうび', '🎂', 3], ['computer', 'コンピュータ', '💻', 3],
+            ['elephant', 'ゾウ', '🐘', 3], ['hospital', 'びょういん', '🏥', 3], ['sandwich', 'サンドイッチ', '🥪', 3],
+        ];
+        const RAW_VERBS = [
+            ['ask', 'きく', '❓', 1], ['buy', 'かう', '🛒', 1], ['cry', 'なく', '😭', 1], ['cut', 'きる', '✂️', 1],
+            ['dig', 'ほる', '⛏️', 1], ['eat', 'たべる', '🍽️', 1], ['fly', 'とぶ', '🕊️', 1], ['get', 'える', '🤲', 1],
+            ['go', 'いく', '🚶', 1], ['hop', 'はねる', '🐇', 1], ['hug', 'だっこ', '🫂', 1], ['jog', 'ジョギング', '🏃', 1],
+            ['mix', 'まぜる', '🥣', 1], ['put', 'おく', '📦', 1], ['run', 'はしる', '🏃', 1], ['say', 'いう', '🗣️', 1],
+            ['see', 'みる', '👀', 1], ['sit', 'すわる', '🪑', 1], ['try', 'ためす', '💪', 1], ['use', 'つかう', '🔨', 1],
+            ['win', 'かつ', '🏆', 1],
+            ['blow', 'ふく', '🌬️', 2], ['call', 'よぶ', '📞', 2], ['come', 'くる', '👋', 2], ['cook', 'りょうり', '🍳', 2],
+            ['draw', 'かく', '🎨', 2], ['drop', 'おとす', '⬇️', 2], ['fall', 'おちる', '🍂', 2], ['find', 'みつける', '🔍', 2],
+            ['give', 'あげる', '🎁', 2], ['grow', 'そだつ', '🌱', 2], ['have', 'もつ', '🤲', 2], ['help', 'たすける', '🆘', 2],
+            ['jump', 'ジャンプ', '🤸', 2], ['kick', 'ける', '⚽', 2], ['know', 'しる', '💡', 2], ['like', 'すき', '❤️', 2],
+            ['live', 'すむ', '🏠', 2], ['look', 'みる', '🔭', 2], ['love', 'あいする', '🥰', 2], ['make', 'つくる', '🧱', 2],
+            ['meet', 'あう', '🤝', 2], ['move', 'うごく', '🚚', 2], ['open', 'あける', '🚪', 2], ['play', 'あそぶ', '🎮', 2],
+            ['pull', 'ひっぱる', '🎣', 2], ['push', 'おす', '🫷', 2], ['read', 'よむ', '📖', 2], ['ride', 'のる', '🚲', 2],
+            ['send', 'おくる', '📨', 2], ['show', 'みせる', '📺', 2], ['sing', 'うたう', '🎤', 2], ['stop', 'とまる', '🛑', 2],
+            ['swim', 'およぐ', '🏊', 2], ['take', 'とる', '✊', 2], ['talk', 'はなす', '💬', 2], ['tell', 'つたえる', '📢', 2],
+            ['wait', 'まつ', '⏳', 2], ['walk', 'あるく', '🚶', 2], ['want', 'ほしい', '🙏', 2], ['wash', 'あらう', '🧼', 2],
+            ['work', 'はたらく', '💼', 2],
+            ['bring', 'もってくる', '🎒', 3], ['build', 'たてる', '🏗️', 3], ['carry', 'はこぶ', '📦', 3], ['catch', 'つかまえる', '🎣', 3],
+            ['clean', 'そうじ', '🧹', 3], ['climb', 'のぼる', '🧗', 3], ['close', 'しめる', '🚪', 3], ['count', 'かぞえる', '🔢', 3],
+            ['dance', 'おどる', '💃', 3], ['drink', 'のむ', '🥤', 3], ['drive', 'うんてん', '🚗', 3], ['enjoy', 'たのしむ', '🥳', 3],
+            ['enter', 'はいる', '🚪', 3], ['fight', 'たたかう', '⚔️', 3], ['guess', 'あてる', '🤔', 3], ['laugh', 'わらう', '😆', 3],
+            ['learn', 'まなぶ', '📚', 3], ['leave', 'さる', '👋', 3], ['listen', 'きく', '👂', 3], ['paint', 'ぬる', '🖌️', 3],
+            ['plant', 'うえる', '🌱', 3], ['share', 'わける', '🍰', 3], ['sleep', 'ねる', '😴', 3], ['smile', 'ほほえむ', '😊', 3],
+            ['speak', 'はなす', '🗣️', 3], ['stand', 'たつ', '🧍', 3], ['start', 'はじめる', '▶️', 3], ['study', 'べんきょう', '✍️', 3],
+            ['teach', 'おしえる', '👩‍🏫', 3], ['think', 'かんがえる', '💭', 3], ['throw', 'なげる', '⚾', 3], ['touch', 'さわる', '👆', 3],
+            ['travel', 'りょこう', '✈️', 3], ['visit', 'たずねる', '🏠', 3], ['watch', 'みる', '📺', 3], ['write', 'かく', '✍️', 3],
+        ];
+        const RAW_ADJECTIVES = [
+            ['bad', 'わるい', '😈', 1], ['big', 'おおきい', '🐘', 1], ['dry', 'かわいた', '🌵', 1], ['fat', 'ふとった', '🐷', 1],
+            ['fun', 'たのしい', '🥳', 1], ['hot', 'あつい', '🔥', 1], ['low', 'ひくい', '⬇️', 1], ['new', 'あたらしい', '✨', 1],
+            ['old', 'ふるい', '📜', 1], ['red', 'あかい', '🟥', 1], ['sad', 'かなしい', '😢', 1], ['wet', 'ぬれた', '💧', 1],
+            ['blue', 'あおい', '🟦', 2], ['busy', 'いそがしい', '🏃', 2], ['cold', 'さむい', '❄️', 2], ['cool', 'かっこいい', '😎', 2],
+            ['cute', 'かわいい', '🎀', 2], ['dark', 'くらい', '🌑', 2], ['deep', 'ふかい', '🕳️', 2], ['easy', 'かんたん', '👌', 2],
+            ['fair', 'こうへい', '⚖️', 2], ['fast', 'はやい', '🐆', 2], ['fine', 'げんき', '👍', 2], ['free', 'じゆう', '🕊️', 2],
+            ['full', 'いっぱい', '🈵', 2], ['glad', 'うれしい', '😊', 2], ['good', 'よい', '👍', 2], ['hard', 'かたい', '💎', 2],
+            ['high', 'たかい', '🏔️', 2], ['huge', 'きょだい', '🦕', 2], ['kind', 'しんせつ', '🤝', 2], ['last', 'さいご', '🏁', 2],
+            ['late', 'おそい', '🐢', 2], ['lazy', 'なまけ', '🦥', 2], ['left', 'ひだり', '⬅️', 2], ['long', 'ながい', '🐍', 2],
+            ['loud', 'うるさい', '📢', 2], ['many', 'たくさん', '🔢', 2], ['near', 'ちかい', '📍', 2], ['nice', 'すてき', '✨', 2],
+            ['pink', 'ピンク', '🩷', 2], ['poor', 'まずしい', '💸', 2], ['rich', 'おかねもち', '💰', 2], ['safe', 'あんぜん', '⛑️', 2],
+            ['sick', 'びょうき', '🤒', 2], ['slow', 'おそい', '🐌', 2], ['soft', 'やわらかい', '☁️', 2], ['tall', 'せがたかい', '🦒', 2],
+            ['tiny', 'ちいさい', '🐜', 2], ['warm', 'あたたかい', '♨️', 2], ['weak', 'よわい', '🥀', 2], ['wide', 'ひろい', '🏞️', 2],
+            ['wild', 'やせいの', '🦁', 2], ['wise', 'かしこい', '🦉', 2],
+            ['angry', 'おこった', '😡', 3], ['black', 'くろい', '⬛', 3], ['brave', 'ゆうかん', '🦸', 3], ['brown', 'ちゃいろ', '🟤', 3],
+            ['cheap', 'やすい', '🏷️', 3], ['clean', 'きれい', '✨', 3], ['clear', 'とうめい', '💎', 3], ['crazy', 'クレイジー', '🤪', 3],
+            ['dirty', 'きたない', '💩', 3], ['early', 'はやい', '⏰', 3], ['empty', 'からっぽ', '🈳', 3], ['fresh', 'しんせん', '🥗', 3],
+            ['funny', 'おもしろい', '🤣', 3], ['great', 'すごい', '🌟', 3], ['green', 'みどり', '🟩', 3], ['happy', 'ハッピー', '😆', 3],
+            ['heavy', 'おもい', '🏋️', 3], ['human', 'にんげん', '🧑', 3], ['large', 'おおきい', '🐳', 3], ['light', 'かるい', '🪶', 3],
+            ['lucky', 'ラッキー', '🤞', 3], ['noisy', 'うるさい', '🎺', 3], ['proud', 'ほこらしい', '😤', 3], ['quick', 'すばやい', '⚡', 3],
+            ['quiet', 'しずか', '🤫', 3], ['ready', 'じゅんびOK', '👌', 3], ['right', 'みぎ', '➡️', 3], ['rough', 'ざらざら', '🌵', 3],
+            ['round', 'まるい', '⚪', 3], ['sharp', 'するどい', '🔪', 3], ['short', 'みじかい', '📏', 3], ['silly', 'おばか', '🤪', 3],
+            ['small', 'ちいさい', '🐁', 3], ['smart', 'あたまいい', '🧠', 3], ['sorry', 'ごめん', '🙇', 3], ['sour', 'すっぱい', '🍋', 3],
+            ['steep', 'きゅう', '📉', 3], ['sweet', 'あまい', '🍬', 3], ['thick', 'あつい', '📚', 3], ['tired', 'つかれた', '😫', 3],
+            ['tough', 'タフ', '💪', 3], ['white', 'しろい', '⬜', 3], ['wrong', 'まちがい', '❌', 3], ['young', 'わかい', '👶', 3],
+            ['pretty', 'かわいい', '🎀', 3], ['strong', 'つよい', '💪', 3], ['yellow', 'きいろ', '🟨', 3], ['sleepy', 'ねむい', '😪', 3],
+            ['hungry', 'お腹すいた', '😋', 3], ['thirsty', '喉かわいた', '🥛', 3], ['orange', 'オレンジ', '🟧', 3], ['purple', 'むらさき', '🟪', 3],
+        ];
+
+        const generateData = (raw, type) => raw.map((item, index) => ({
+            id: `${type}-${index}`,
+            front: item[0],
+            back: item[1],
+            speakText: item[0],
+            emoji: item[2],
+            level: item[3],
+            type: type
+        }));
+
+        const DATA_SETS = {
+            alphabet: generateData(RAW_ALPHA, 'alphabet'),
+            noun: generateData(RAW_NOUNS, 'noun'),
+            verb: generateData(RAW_VERBS, 'verb'),
+            adjective: generateData(RAW_ADJECTIVES, 'adjective')
+        };
+
+        const COLORS = [
+            'bg-blue-500', 'bg-red-400', 'bg-green-400', 
+            'bg-yellow-400', 'bg-purple-400', 'bg-pink-400', 'bg-orange-400', 'bg-teal-400',
+            'bg-indigo-400', 'bg-rose-400', 'bg-cyan-400', 'bg-emerald-400'
+        ];
+
+        // --- メインアプリコンポーネント ---
+        const App = () => {
+            const [mode, setMode] = useState('menu');
+            const [currentItem, setCurrentItem] = useState(null);
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [isSoundOn, setIsSoundOn] = useState(true);
+            const [bgColor, setBgColor] = useState(COLORS[0]);
+            const [streak, setStreak] = useState(0); 
+            const [voices, setVoices] = useState([]);
+
+            useEffect(() => {
+                if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+                const loadVoices = () => {
+                    try {
+                        setVoices(window.speechSynthesis.getVoices());
+                    } catch (e) { console.error(e); }
+                };
+                window.speechSynthesis.onvoiceschanged = loadVoices;
+                loadVoices();
+                return () => { if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = null; };
+            }, []);
+
+            const getDifficultyLevel = (currentStreak) => {
+                if (currentStreak < 5) return [1];
+                if (currentStreak < 15) return [1, 2];
+                return [1, 2, 3];
+            };
+
+            const pickRandomItem = useCallback((targetMode, currentId = null, currentStreak = 0) => {
+                let dataSet = DATA_SETS[targetMode];
+               
+                if (targetMode !== 'alphabet') {
+                    const allowedLevels = getDifficultyLevel(currentStreak);
+                    const filtered = dataSet.filter(item => allowedLevels.includes(item.level));
+                    if (filtered.length > 0) dataSet = filtered;
+                }
+
+                let nextItem;
+                let attempts = 0;
+                do {
+                    const randomIndex = Math.floor(Math.random() * dataSet.length);
+                    nextItem = dataSet[randomIndex];
+                    attempts++;
+                } while (currentId && nextItem.id === currentId && attempts < 10);
+
+                const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+                setCurrentItem(nextItem);
+                setBgColor(randomColor);
+                setIsFlipped(false);
+            }, []);
+
+            const startMode = (selectedMode) => {
+                setStreak(0);
+                pickRandomItem(selectedMode, null, 0);
+                setMode(selectedMode);
+            };
+
+            const goToMenu = () => {
+                setMode('menu');
+                setIsFlipped(false);
+                setCurrentItem(null);
+                setStreak(0);
+            };
+
+            const speak = (text) => {
+                if (!isSoundOn || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+                try {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.9;
+                    if (voices.length > 0) {
+                        const englishVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en_US'));
+                        if (englishVoice) utterance.voice = englishVoice;
+                    }
+                    window.speechSynthesis.speak(utterance);
+                } catch (e) { console.error(e); }
+            };
+
+            const handleCardClick = () => {
+                if (!currentItem) return;
+
+                if (!isFlipped) {
+                    setIsFlipped(true);
+                    speak(currentItem.speakText);
+                    if (mode !== 'alphabet') setStreak(prev => prev + 1);
+                } else {
+                    pickRandomItem(mode, currentItem.id, streak);
+                }
+            };
+
+            const getFontSize = (text, isBack = false) => {
+                if (!text) return 'text-4xl';
+                const len = text.length;
+                if (isBack && mode !== 'alphabet') {
+                    if (len > 6) return 'text-3xl';
+                    if (len > 4) return 'text-4xl';
+                    return 'text-5xl';
+                }
+                if (len === 1) return 'text-[10rem]';
+                if (len < 4) return 'text-7xl'; 
+                if (len < 7) return 'text-6xl'; 
+                if (len < 10) return 'text-5xl'; 
+                return 'text-4xl';
+            };
+
+            const MenuButton = ({ modeKey, title, sub, icon: IconComponent, colorClass, borderColor }) => (
+                <button 
+                    onClick={() => startMode(modeKey)}
+                    className={`group relative bg-white p-4 rounded-3xl shadow-md hover:shadow-xl transition-all active:scale-95 flex flex-col items-center justify-center gap-2 border-2 ${borderColor} h-40`}
+                >
+                    <div className={`${colorClass} p-3 rounded-2xl group-hover:scale-110 transition-transform`}>
+                        <IconComponent className="text-white" size={32} />
+                    </div>
+                    <div className="text-center">
+                        <div className="text-lg font-bold text-slate-700">{title}</div>
+                        <div className="text-xs text-slate-400">{sub}</div>
+                    </div>
+                </button>
+            );
+
+            if (mode === 'menu') {
+                return (
+                    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4 font-sans select-none">
+                        <h1 className="text-3xl font-bold text-slate-600 mb-6 flex items-center gap-2">
+                            <Icons.Star className="text-yellow-400 fill-yellow-400" size={32} />
+                            えいごマスター
+                            <Icons.Star className="text-yellow-400 fill-yellow-400" size={32} />
+                        </h1>
+                       
+                        <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+                            <MenuButton modeKey="alphabet" title="ABC" sub="アルファベット" icon={Icons.Type} colorClass="bg-blue-400" borderColor="border-blue-100" />
+                            <MenuButton modeKey="noun" title="めいし" sub="もののなまえ" icon={Icons.BookOpen} colorClass="bg-green-400" borderColor="border-green-100" />
+                            <MenuButton modeKey="verb" title="どうし" sub="うごき" icon={Icons.Activity} colorClass="bg-orange-400" borderColor="border-orange-100" />
+                            <MenuButton modeKey="adjective" title="ようす" sub="どんなかんじ？" icon={Icons.Smile} colorClass="bg-purple-400" borderColor="border-purple-100" />
+                        </div>
+                    </div>
+                );
+            }
+
+            if (!currentItem) return <div className="min-h-screen bg-slate-100" />;
+
+            const getModeName = () => {
+                switch(mode) {
+                    case 'alphabet': return 'アルファベット';
+                    case 'noun': return 'めいし';
+                    case 'verb': return 'どうし';
+                    case 'adjective': return 'けいようし';
+                    default: return '';
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4 font-sans select-none overflow-hidden touch-none">
+                    <div className="absolute top-4 w-full max-w-md flex justify-between items-center px-4 z-10">
+                        <button onClick={goToMenu} className="p-3 rounded-full bg-white shadow-md active:scale-95 text-slate-500 hover:bg-slate-50">
+                            <Icons.ArrowLeft size={24} />
+                        </button>
+                       
+                        <div className="bg-white px-4 py-2 rounded-full shadow-sm text-slate-500 font-bold text-sm flex items-center gap-2">
+                            {mode !== 'alphabet' && streak > 0 && (
+                                <span className="flex items-center text-yellow-500 gap-1 mr-2">
+                                    <Icons.Star size={16} className="fill-current" /> {streak}
+                                </span>
+                            )}
+                            {getModeName()}
+                        </div>
+
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setIsSoundOn(!isSoundOn); }}
+                            className="p-3 rounded-full bg-white shadow-md active:scale-95 transition-transform"
+                        >
+                            {isSoundOn ? <Icons.Volume2 className="text-blue-500" /> : <Icons.VolumeX className="text-slate-400" />}
+                        </button>
+                    </div>
+
+                    <div key={currentItem.id} className="perspective-1000 w-full max-w-xs aspect-[3/4] cursor-pointer mt-8 relative" onClick={handleCardClick}>
+                        <div className={`relative w-full h-full duration-500 transform-style-3d transition-transform ${isFlipped ? 'rotate-y-180' : ''}`}>
+                            <div className="absolute w-full h-full backface-hidden rounded-3xl shadow-2xl flex flex-col items-center justify-center bg-white border-4 border-white overflow-hidden">
+                                <div className={`w-full h-full rounded-2xl flex flex-col items-center justify-center ${bgColor} bg-opacity-10 p-4 relative`}>
+                                    {mode !== 'alphabet' && streak >= 15 && !isFlipped && (
+                                        <div className="absolute top-4 right-4 text-yellow-400 animate-pulse"><Icons.Sparkles size={24} className="fill-current" /></div>
+                                    )}
+                                    <span className={`${getFontSize(currentItem.front)} font-bold pb-4 drop-shadow-sm ${bgColor.replace('bg-', 'text-')} text-center leading-tight break-words px-2`}>
+                                        {currentItem.front}
+                                    </span>
+                                    {mode !== 'alphabet' && currentItem.emoji && (
+                                        <span className="text-6xl mt-4 opacity-80 filter drop-shadow-md">{currentItem.emoji}</span>
+                                    )}
+                                </div>
+                                <div className="absolute bottom-6 text-slate-400 font-bold animate-bounce text-sm">
+                                    タップしてね
+                                </div>
+                            </div>
+
+                            <div className="absolute w-full h-full backface-hidden rotate-y-180 rounded-3xl shadow-2xl flex flex-col items-center justify-center bg-white border-4 border-white overflow-hidden">
+                                <div className="w-full h-full rounded-2xl flex flex-col items-center justify-center bg-slate-50 p-4">
+                                    <span className="text-xl font-bold text-slate-400 absolute top-8">
+                                        {mode === 'alphabet' ? `${currentItem.front} は...` : 'せいかいは...'}
+                                    </span>
+                                    <span className={`${getFontSize(currentItem.back, true)} font-bold pb-4 drop-shadow-sm ${bgColor.replace('bg-', 'text-')} text-center px-2`}>
+                                        {currentItem.back}
+                                    </span>
+                                    <div className="absolute bottom-8 px-8 py-3 bg-blue-500 text-white rounded-full font-bold shadow-lg active:scale-95 transition-transform hover:bg-blue-600">
+                                        つぎへ
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
