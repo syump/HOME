@@ -13,8 +13,6 @@
 
   gtag('config', 'G-D4TK1T1RCN');
 </script>
-
-     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>syump.com - ホーム</title>
@@ -32,14 +30,33 @@
         /* ヘッダー */
         header {
             background-color: #2c3e50;
-            color: #fff;
             text-align: center;
             padding: 2rem 1rem;
         }
+        
+        /* ロゴ画像の設定 */
+        .header-logo {
+            max-width: 250px; /* ロゴの最大幅。画像に合わせて数値を変更してください */
+            height: auto;
+            vertical-align: middle;
+        }
+
+        /* ロゴ画像にリンクを貼る際の下線などを消す */
+        header a {
+            text-decoration: none;
+            color: #fff;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        header a:hover {
+            opacity: 0.8; /* カーソルを乗せた時に少しフワッと透けさせる */
+        }
+
         header h1 {
-            margin: 0;
-            font-size: 2rem;
+            margin: 10px 0 0 0;
+            font-size: 1.2rem;
             letter-spacing: 2px;
+            color: #fff;
         }
 
         /* メインコンテンツ */
@@ -101,7 +118,10 @@
 <body>
 
     <header>
-        <h1>syump.com</h1>
+        <a href="index.html">
+            <img src="logo.png" alt="syump.com ロゴ" class="header-logo">
+            <h1>syump.com</h1>
+        </a>
     </header>
 
     <main>
