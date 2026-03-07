@@ -27,37 +27,7 @@
             line-height: 1.6;
         }
 
-        /* ヘッダー */
-        header {
-            background-color: #fff;
-            text-align: center;
-            padding: 2rem 1rem;
-        }
-        
-        /* ロゴ画像の設定 */
-        .header-logo {
-            max-width: 250px; /* ロゴの最大幅。画像に合わせて数値を変更してください */
-            height: auto;
-            vertical-align: left;
-        }
-
-        /* ロゴ画像にリンクを貼る際の下線などを消す */
-        header a {
-            text-decoration: none;
-            color: #fff;
-            display: inline-block;
-            transition: opacity 0.2s;
-        }
-        header a:hover {
-            opacity: 0.8; /* カーソルを乗せた時に少しフワッと透けさせる */
-        }
-
-        header h1 {
-            margin: 10px 0 0 0;
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            color: #fff;
-        }
+{% include header.html %}
 
         /* メインコンテンツ */
         main {
