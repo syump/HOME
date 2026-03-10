@@ -1,0 +1,4 @@
+plugins:
+  - jekyll-sitemap
+
+url: "https://syump.com" # 自分のドメインを必ず指定
