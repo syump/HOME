@@ -1,26 +1,32 @@
-
 <header class="site-header">
   <div class="header-inner">
-    <a href="/" class="logo">
+    <a href="{{ site.baseurl }}/" class="logo">
       <img src="{{ site.baseurl }}/assets/images/logo.png" alt="syump.com ロゴ" width="250">
     </a>
 
+    <input type="checkbox" id="nav-input" class="nav-unshown">
+    <label for="nav-input" class="nav-open"><span></span></label>
+
     <nav class="global-nav">
       <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/english-master/">えいごマスター</a></li>
-        <li><a href="/calendar/">コピペカレンダー</a></li>
-        <li><a href="/link/">リンク</a></li>
+        <li><a href="{{ site.baseurl }}/">Home</a></li>
+        <li><a href="{{ site.baseurl }}/english-master/">えいごマスター</a></li>
+        <li><a href="{{ site.baseurl }}/calendar/">コピペカレンダー</a></li>
+        <li><a href="{{ site.baseurl }}/link/">リンク</a></li>
       </ul>
     </nav>
   </div>
 </header>
 
 <style>
+  /* --- 共通・PC用スタイル --- */
   .site-header {
     background-color: #fff;
     border-bottom: 1px solid #eee;
     padding: 10px 20px;
+    position: sticky; /* スクロールしても固定されるように */
+    top: 0;
+    z-index: 100;
   }
   .header-inner {
     display: flex;
@@ -31,9 +37,13 @@
   }
   .logo img {
     display: block;
-    max-height: 100px; /* ロゴの高さに合わせて調整してください */
+    max-height: 100px;
     width: auto;
   }
+  
+  .nav-unshown { display: none; } /* チェックボックスは隠す */
+  .nav-open { display: none; }    /* PCではハンバーガーを表示しない */
+
   .global-nav ul {
     list-style: none;
     display: flex;
@@ -45,8 +55,60 @@
     text-decoration: none;
     color: #333;
     font-weight: bold;
+    font-size: 15px;
   }
-  .global-nav a:hover {
-    color: #007bff;
+  .global-nav a:hover { color: #007aff; }
+
+  /* --- スマホ用スタイル (768px以下) --- */
+  @media screen and (max-width: 768px) {
+    .nav-open {
+      display: flex;
+      height: 32px;
+      width: 32px;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      z-index: 110;
+    }
+    /* ハンバーガーの三本線 */
+    .nav-open span, .nav-open span:before, .nav-open span:after {
+      content: '';
+      display: block;
+      height: 3px;
+      width: 25px;
+      border-radius: 3px;
+      background: #333;
+      transition: 0.3s;
+      position: absolute;
+    }
+    .nav-open span:before { bottom: 8px; }
+    .nav-open span:after { top: 8px; }
+
+    /* チェックが入った時のアニメーション（三本線が×になる） */
+    #nav-input:checked ~ .nav-open span { background: rgba(255, 255, 255, 0); }
+    #nav-input:checked ~ .nav-open span:before { bottom: 0; transform: rotate(45deg); }
+    #nav-input:checked ~ .nav-open span:after { top: 0; transform: rotate(-45deg); }
+
+    /* メニュー本体を隠しておく（スマホ時） */
+    .global-nav {
+      position: fixed;
+      top: 0;
+      right: -100%; /* 最初は画面の外 */
+      width: 70%;
+      height: 100%;
+      background: #fff;
+      box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+      transition: 0.4s;
+      padding-top: 80px;
+    }
+    .global-nav ul {
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+    /* チェックが入ったら画面内にスライド */
+    #nav-input:checked ~ .global-nav {
+      right: 0;
+    }
   }
 </style>
