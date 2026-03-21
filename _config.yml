@@ -2,3 +2,6 @@ plugins:
   - jekyll-sitemap
 
 url: "https://www.syump.com" # 自分のドメインを必ず指定
+
+plugins:
+  - jekyll-seo-tag
